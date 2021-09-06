@@ -1,2 +1,2 @@
-# UAV-Project-Raspberry-Pi-Ground-station
-ground station raspberry pi
+# UAV-Project-Groundstation
+ground station raspberry pi + oculus2

@@ -1,12 +1,11 @@
-import re
+import sys
+# this is where python stores modules, yours could be different
+sys.path.append(r"D:/Alessandro/python39/Lib/site-packages")
+
 import time
 import argparse
 from serial.serialutil import SerialException
 import serial
-import sys
-# this is where python stores modules, yours could be different
-sys.path.append(
-    r"C:\Users\MIMS-PC\AppData\Local\Programs\Python\Python39\Lib\site-packages")
 
 
 current_version = "v1.0.4"  # changelog in repo
@@ -35,9 +34,12 @@ MAVLINKrange = (0, 1)
 
 OP_RESEND_RANGE = (0, 1)
 
-MIN_FREQ = range(902000, 928000, 1000)  # in kHz
+MIN_FREQ  = range(902000,928000,1000) # in kHz
+#MIN_FREQ = range(414000, 440000, 1000)  # in kHz
 
-MAX_FREQ = range(903000, 929000, 1000)  # in kHz
+MAX_FREQ  = range(903000,929000,1000) # in kHz
+
+#MAX_FREQ = range(440000, 466000, 1000)  # in kHz
 
 numb_channels = range(1, 50,1)
 
@@ -65,7 +67,7 @@ RANGES =  [serial_speeds, air_speeds, netids, txpowers, ECCrange, MAVLINKrange, 
 
 # ************* DEFAULT VALUES***********************************
 
-DEFAULTS =  [serial_speeds[5],air_speeds[7], netids[1], txpowers[20], ECCrange[0], MAVLINKrange[0], OP_RESEND_RANGE[0], MIN_FREQ[0], MAX_FREQ[5], numb_channels[0], DUTY_CYCLE_RANGE[30], LBT_RSSI_range[0], MANCHESTER_range[0], rtscts_RANGE[0], nodeID_range[0], NODEDESTINATION_range[0], SYNCANY_range[0], NODECOUNT_range[0]]
+DEFAULTS =  [serial_speeds[5],air_speeds[5], netids[36], txpowers[9], ECCrange[0], MAVLINKrange[0], OP_RESEND_RANGE[1], MIN_FREQ[0], MAX_FREQ[0], numb_channels[40], DUTY_CYCLE_RANGE[80], LBT_RSSI_range[0], MANCHESTER_range[0], rtscts_RANGE[0], nodeID_range[0], NODEDESTINATION_range[0], SYNCANY_range[0], NODECOUNT_range[0]]
 
 default_serial_port = 'COM4'
 

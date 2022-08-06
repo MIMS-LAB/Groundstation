@@ -1,1 +1,3 @@
-
+[submodule "lib/rrc_encoder"]
+	path = include/rrc_encoder
+	url = https://github.com/MIMS-LAB/Library-encoder-decoder.git

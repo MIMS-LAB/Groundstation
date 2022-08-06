@@ -149,9 +149,9 @@ while gnd_station_connect ==True:
                 servo2_headerIndex = i
                 servo2_dataIndex = i+1
         
-                print("length of data read header: %d\n"%len(data_read_header))
-                print("servo1_data index: %d\n" % servo1_dataIndex)
-                print("servo2_data index: %d\n" % servo2_dataIndex)
+                #print("length of data read header: %d\n"%len(data_read_header))
+                #print("servo1_data index: %d\n" % servo1_dataIndex)
+                #print("servo2_data index: %d\n" % servo2_dataIndex)
                 info = {"header": data_read_header[servo1_headerIndex], "value":data_read_header[servo1_dataIndex]}
                 csv_writer.writerow(info)
                 info2 = {"header":data_read_header[servo2_headerIndex], "value":data_read_header[servo2_dataIndex]}

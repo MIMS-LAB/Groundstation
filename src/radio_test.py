@@ -1,22 +1,54 @@
 '''
-This file relates to sending commands to flight contorller to control servos via pc and not frsky taranis controller
+This file relates to sending header_servo1s to flight contorller to control servos via pc and not frsky taranis controller
 
 '''
 
 import sys
 # this is where python stores modules, yours could be different
+#sys.path.append(r"D:/Alessandro/python39/Lib/site-packages")
+
 sys.path.append(
-    r"C:\Users\MIMS-PC\AppData\Local\Programs\Python\Python39\Lib\site-packages")
+    "C:/Users/MIMS-PC/AppData/Local/Programs/Python/Python39/Lib/site-packages")
 sys.path.append(r"E:\school_teams\environment2\Lib\site-packages")
+sys.path.append(r"D:\ALESSANDRO\MIMS lab-UAV project\Library-encoder-decoder\src")
+
 
 import time
-import cv2
+#import cv2
 import serial
-RX_PORT = 'COM13'
+import rrc_decoder as d
+import random 
+import cv2 
+import csv
+import pandas as pd
+
+#radio variables:
 TX_PORT = 'COM4'
 baud = 57600
-response = b''  
-waiting  = 0
+gnd_station_connect = False
+radio_type = "RFD" 
+
+#servo variables:
+header_servo1 = "Sm" #Small servo 
+header_servo2 = "Lg" # Large servo 
+servo1_flag = False
+servo2_flag = False
+servo_commands_2send = 0
+max_range = 12 # max %duty cycle of servo1
+test_img_path = r"D:\ALESSANDRO\MIMS lab-UAV project\Groundstation\images\tile.JPG"
+read_data = 0
+header = []
+split_data=0
+servo1_headerIndex =0
+servo2_headerIndex = 0
+servo1_dataIndex = 0
+servo2_dataIndex = 0
+# csv variables:
+csv_path = r"D:\ALESSANDRO\MIMS lab-UAV project\Groundstation\datalog.csv"
+csv_flag = True
+
+fieldnames = ["header","value"]
+
 ####    initilization    ####
 
 while True:
@@ -25,91 +57,117 @@ while True:
     baud = baud
 
     try:
-        ser_tx = serial.Serial(
-            port=port,
-            baudrate=baud,
-            parity=serial.PARITY_EVEN,
-            stopbits=serial.STOPBITS_TWO,
-            bytesize=serial.EIGHTBITS,xonxoff=True,
-            timeout=None)
+        ser_gnd_station = d.radioConnection(port, baud)
+
+        if(radio_type=="3DR"):
+            ser_gnd_station._RadioSerialBuffer = serial.Serial(
+                port=port,
+                baudrate=baud,
+                parity=serial.PARITY_EVEN,
+                stopbits=serial.STOPBITS_TWO,
+                bytesize=serial.EIGHTBITS,xonxoff=True,
+                timeout=None)
+            gnd_station_connect = True
+
+        elif (radio_type == "RFD"):
+            gnd_station_connect = True
+
         break
     except Exception as e:
         print(e)
+        gnd_station = False
         exit(-1)
 
-print(" connected to: " + ser_tx.portstr)
+print(radio_type + " connected to: " + ser_gnd_station._RadioSerialBuffer.portstr )
 
-while True:
+with open(csv_path, 'w+') as csv_file:
+    csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    csv_writer.writeheader()
+print("finished writing headers to csv file\n")
+#============= MAIN LOOP:========================
 
-    port = RX_PORT
-    baud = baud
+while gnd_station_connect ==True:
 
-    try:
-        ser_rx = serial.Serial(
-            port=port,
-            baudrate=baud,
-            parity=serial.PARITY_EVEN,
-            stopbits=serial.STOPBITS_TWO,
-            bytesize=serial.EIGHTBITS,xonxoff=True,
-            timeout=None)
-        break
-    except Exception as f:
-        print(f)
-        exit(-2)
-print(" connected to: " + ser_rx.portstr)
+    img = cv2.imread(test_img_path)
+    cv2.imshow('imageWindow',img)
+    if(cv2.waitKey(1000) & 0xFF == ord('+')):
+        servo_commands_2send = servo_commands_2send + 0.5
+        print(servo_commands_2send)
+    elif(cv2.waitKey(1000) & 0xFF == ord('-')):
+        servo_commands_2send = servo_commands_2send - 0.5
+        print(servo_commands_2send)
+   
 
-
-# with ser as ser:
-'''
-ser.close()
-ser.open()
-'''
-
-while True:
+    if ((servo_commands_2send > max_range) or (servo_commands_2send < 0)):
+        servo_commands_2send=0
+        print("commands exceeded range. RESETTING VALUES \n")
     
-    #ser_rx.flushInput()
-    ser_tx.flushOutput()
-    time.sleep(1)
+     
+    if(cv2.waitKey(2000) & 0xFF == ord('s')):
+        servo1_flag = ser_gnd_station.sendCommand(header_servo1)
+        if (servo1_flag == 1):
+            servo1_com = int(10*servo_commands_2send)
+            ser_gnd_station._RadioSerialBuffer.write(bytes(str(servo1_com),'utf-8'))
+            ser_gnd_station._RadioSerialBuffer.write(b'\n')
+        
+            print("sent data success!\t header_servo1 sent was: %s%d \n" % (header_servo1,servo1_com))
+            servo1_flag = False
 
-    sent_data = ser_tx.write(b"start\n")
-    print("sent data is: %s \n" % sent_data)
-
-    #data = ser.inWaiting()
-    '''
-    while ser_rx.inWaiting():
-        print("Reading serial port buffer.")
-        response += ser_rx.readline()
-        print("Response:", response.decode('utf-8', errors='ignore'))
-        time.sleep(sleep_time_after_buffer_read)
-        print("Characters in receive buffer after reading and waiting %d seconds:" % sleep_time_after_buffer_read, ser.inWaiting())
-        print("No more characters in serial port buffer.")
-        response.decode('utf-8', errors='ignore') # so response is a string==> ie- serial.read returns strings 
-    
-    '''
-
-    waiting = ser_rx.inWaiting()
-
-    time.sleep(1)
-
-    response = ser_rx.read(waiting).strip().decode("utf-8")
-    
-    print("in waiting data is: %s \n" % waiting)
-    
-    print("******* read data is:%s ********\n " % response)
-    
-    '''
-    if (data !=""):
-        string_array += ser.read(data).strip().decode('utf-8')
-        print(string_array)
-        time.sleep(1)
+    elif(cv2.waitKey(2000) & 0xFF == ord('l')):
+        servo2_flag = ser_gnd_station.sendCommand(header_servo2)
+        if (servo2_flag == 1):
+            servo2_com = int(10*servo_commands_2send)
+            ser_gnd_station._RadioSerialBuffer.write(bytes(str(servo2_com),'utf-8'))
+            ser_gnd_station._RadioSerialBuffer.write(b'\n')
+        
+            print("sent data success!\t header_servo2 sent was: %s%d \n" % (header_servo2,servo2_com))
+            servo2_flag = False
     else:
-        print("no data read")     
-        time.sleep(1)
-    '''
-    if (cv2.waitKey(0) & 0xFF == ord("q")):
-        print("closing windows and ser comms")
+        print("idle: radio has not sent a command.\n")
+        ser_gnd_station.sendCommand("idle")
+    if(csv_flag == True):
+            print("opening appending to csv file\n")          
+            csv_file = open(csv_path, 'a')
+            csv_flag = False
+            csv_writer = csv.DictWriter(csv_file, fieldnames=fieldnames)
+    data_read = ser_gnd_station.readString()
+    if (data_read == None):
+        data_read = "none\n"
+        print("none data type\n")
 
+
+    data_read_header = data_read.split('\n')
+    if(len(data_read_header)>=2):
+        for i in range(0,len(data_read_header)):
+            header_test = data_read_header[i]
+            if (header_test == '\x00'):
+                data_read_header.replace('\x00','')
+            elif(header_test == header_servo1):
+                servo1_headerIndex = i
+                servo1_dataIndex = i+1
+            elif(header_test == header_servo2):
+                servo2_headerIndex = i
+                servo2_dataIndex = i+1
+        
+                #print("length of data read header: %d\n"%len(data_read_header))
+                #print("servo1_data index: %d\n" % servo1_dataIndex)
+                #print("servo2_data index: %d\n" % servo2_dataIndex)
+                info = {"header": data_read_header[servo1_headerIndex], "value":data_read_header[servo1_dataIndex]}
+                csv_writer.writerow(info)
+                info2 = {"header":data_read_header[servo2_headerIndex], "value":data_read_header[servo2_dataIndex]}
+                csv_writer.writerow(info2)
+
+    
+           
+    if cv2.waitKey(1000) & 0xFF == ord('q'):
+        print("quitting now\n")
         break
-ser.close()
-cv2.destroyAllWindows()
+
+#====== terminators: =====================  
+
+csv_file.close()
+
+ser_gnd_station._RadioSerialBuffer.close()
+cv2.destroyAllWindows() # destroys image window 
+sys.exit(0)
 

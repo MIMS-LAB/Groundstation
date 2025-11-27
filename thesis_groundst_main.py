@@ -7,12 +7,16 @@ import pygame
 import serial 
 import rrc_decoder as d
 import time as t
+import cv2
 
 rxport= "COM7"
-baud  = 9600
-# This dict can be left as-is, since pygame will generate a
+baud  = 9600 #230400
+
+# This dict can be left as-is, since pygame will generate 
 # pygame.JOYDEVICEADDED event for every joystick connected
 # at the start of the program.
+
+
 joysticks = {}
 while True:
 
@@ -33,32 +37,34 @@ joystick.init()
 screen = pygame.display.set_mode((400, 300))
 pygame.display.set_caption("Joystick Test")
 running = True
+button_state = True
 
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
     data= rx_ser.readString()
-    button = joystick.get_button(0)    
-  
-    if (button):
-        axis = joystick.get_axis(0)
-        print("axis:")
-        print(axis)
-        rx_ser.sendCommand("X" + str(axis) )
-        print("sending X axis command \n")
-    elif data == None:
-        t.sleep(1)
+    button = joystick.get_button(0)
+    if button_state==False:
+        if (button):  
+            button_state = True
+            axisX = round(joystick.get_axis(0),6)
+            axisY = round(joystick.get_axis(1),6)
+            throttle = -round(joystick.get_axis(3),6)
 
-        print("none type error")
+            rx_ser.sendCommand("\nT" + str(throttle) +"\nX" + str(axisX) +"\nY" + str(axisY) )
+            print(" T:\t"+ str(throttle) +"\nX:\t" + str(axisX) +"\nY:\t" + str(axisY))
+    if data == None:
+        t.sleep(0.5)
+        # print("none type error")
         continue
     else:
         print(data)
-        #data_str= data.split(',')
+  
+        button_state = False
+            #data_str= data.split(',')
 
-    
 
 
-    
 rx_ser._RadioSerialBuffer.close()
 pygame.quit()
